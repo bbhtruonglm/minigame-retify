@@ -209,7 +209,7 @@
     .hint {
       position: absolute;
       left: 50%;
-      bottom: 18.8%;
+      bottom: 28%;
       width: 74%;
       transform: translateX(-50%);
       text-align: center;
@@ -240,7 +240,7 @@
     .keeper {
       position: absolute;
       left: 50%;
-      bottom: -38%;
+      bottom: -40%;
       width: 57.5%;
       transform: translateX(calc(-50% + var(--keeper-x, 0px))) scale(var(--keeper-scale, 1));
       transform-origin: center center;
@@ -700,6 +700,7 @@
       playing: false,
       played: false,
       remainingPlays: TOTAL_PLAYS,
+      keeperAsset: keeperAssets[0],
       keeperTick: Math.random() * Math.PI * 2,
       keeperOffset: 0,
       keeperFrozen: false,
@@ -781,6 +782,12 @@
       return min + (Math.random() * (max - min));
     }
 
+    function pickKeeperAsset() {
+      const nextOptions = keeperAssets.filter((asset) => asset !== state.keeperAsset);
+      const pool = nextOptions.length ? nextOptions : keeperAssets;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
     function isInsideRect(clientX, clientY, rect) {
       return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
     }
@@ -826,10 +833,24 @@
       ball.style.setProperty("--ball-rotate", "0deg");
     }
 
-    function resetKeeper() {
+    function resetKeeper(changeAsset = false) {
+      state.keeperTick = 0;
+      state.keeperFrame = 0;
+      state.keeperOffset = 0;
       state.keeperFrozen = false;
-      keeper.src = keeperAssets[Math.floor(Math.random() * keeperAssets.length)];
+      if (changeAsset || !state.keeperAsset) {
+        state.keeperAsset = pickKeeperAsset();
+      }
+      keeper.src = state.keeperAsset;
+      keeper.style.setProperty("--keeper-x", "0px");
       keeper.style.setProperty("--keeper-scale", "1");
+    }
+
+    function resetRoundVisuals(changeAsset = false) {
+      resetBall();
+      resetKeeper(changeAsset);
+      hideBanner();
+      confetti.innerHTML = "";
     }
 
     function getKeeperTravelRange() {
@@ -869,10 +890,17 @@
       }
     }
 
-    function closePopup() {
+    function hidePopup() {
       overlay.classList.add("hidden");
       winPopup.classList.add("hidden");
       losePopup.classList.add("hidden");
+    }
+
+    function closePopup() {
+      hidePopup();
+      if (!state.playing) {
+        resetRoundVisuals(true);
+      }
     }
 
     function spawnConfetti() {
@@ -1093,9 +1121,8 @@
       shootButton.disabled = true;
       resultText.textContent = "Đang sút";
       hintText.textContent = "Bóng đang bay về vị trí bạn vừa chọn...";
-      hideBanner();
-      closePopup();
-      confetti.innerHTML = "";
+      hidePopup();
+      resetRoundVisuals();
 
       const outcome = resolveShotOutcome(aim);
       const start = getBallStartPoint();
@@ -1187,7 +1214,7 @@
       resizeStage();
       syncPlayState();
       resetBall();
-      resetKeeper();
+      resetKeeper(true);
       if (state.introVisible) {
         game.classList.add("hidden");
       }
