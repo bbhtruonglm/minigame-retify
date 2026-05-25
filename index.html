@@ -1,1227 +1,1646 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>World Cup Shoot</title>
-  <style>
-    :root {
-      --safe-white: #f7fbff;
-      --soft-white: rgba(247, 251, 255, 0.84);
-      --night: #050b17;
-      --overlay: rgba(3, 8, 18, 0.6);
-      --accent: #ff6d43;
-      --goal: #29c98b;
-      --shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html,
-    body {
-      margin: 0;
-      min-height: 100%;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at top, #17386d 0%, #071326 38%, #02050b 100%);
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--safe-white);
-    }
-
-    body {
-      display: grid;
-      place-items: center;
-      width: 100vw;
-      height: 100vh;
-      padding: 0;
-    }
-
-    button {
-      border: 0;
-      background: none;
-      padding: 0;
-      cursor: pointer;
-      font: inherit;
-    }
-
-    .stage-shell {
-      position: relative;
-      width: calc(1080px * var(--stage-scale, 1));
-      height: calc(1920px * var(--stage-scale, 1));
-      overflow: hidden;
-    }
-
-    .app {
-      position: relative;
-      top: 0;
-      left: 0;
-      width: 1080px;
-      height: 1920px;
-      overflow: hidden;
-      background: #0b1527;
-      user-select: none;
-      transform: scale(var(--stage-scale, 1));
-      transform-origin: top left;
-      will-change: transform;
-    }
-
-    .bg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-    }
-
-    .screen {
-      position: absolute;
-      inset: 0;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .intro {
-      z-index: 8;
-      background:
-        linear-gradient(180deg, rgba(3, 10, 22, 0.08) 0%, rgba(3, 10, 22, 0.32) 100%);
-    }
-
-    .brand {
-      position: absolute;
-      top: 2.2%;
-      left: 50%;
-      width: 7.6%;
-      min-width: 32px;
-      transform: translateX(-50%);
-      filter: drop-shadow(0 8px 12px rgba(14, 42, 98, 0.45));
-    }
-
-    .title {
-      position: absolute;
-      left: 50%;
-      width: 70%;
-      transform: translateX(-50%);
-      filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.28));
-    }
-
-    .intro .title {
-      top: 11.2%;
-    }
-
-    .intro-copy {
-      position: absolute;
-      left: 50%;
-      top: 40.8%;
-      width: 82%;
-      transform: translateX(-50%);
-      text-align: center;
-      text-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
-    }
-
-    .intro-copy h1 {
-      margin: 0 0 210px;
-      font-family: "Arial Black", Arial, sans-serif;
-      font-size: 92px;
-      line-height: 1;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .intro-copy p {
-      margin: 0 auto;
-      width: 96%;
-      color: var(--soft-white);
-      font-size: 46px;
-      line-height: 1.38;
-    }
-
-    .cta {
-      position: absolute;
-      left: 50%;
-      width: 82%;
-      transform: translateX(-50%);
-      filter: drop-shadow(0 14px 18px rgba(255, 241, 159, 0.24));
-      transition: transform 180ms ease;
-    }
-
-    .cta:active,
-    .shoot:active,
-    .popup-close:active {
-      transform: translateX(-50%) scale(0.97);
-    }
-
-    .intro .cta {
-      top: 55.4%;
-      width: 64%;
-    }
-
-    .cta img,
-    .shoot img {
-      display: block;
-      width: 100%;
-    }
-
-    .game {
-      z-index: 3;
-    }
-
-    .game .title {
-      top: 11%;
-      width: 60%;
-    }
-
-    .badge-row {
-      position: absolute;
-      top: 2.4%;
-      left: 6%;
-      right: 6%;
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      z-index: 6;
-    }
-
-    .badge {
-      flex: 0 0 calc(50% - 9px);
-      padding: 20px 18px;
-      border-radius: 999px;
-      background: rgba(5, 12, 25, 0.54);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      font-family: "Arial Black", Arial, sans-serif;
-      font-size: 32px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      text-align: center;
-      white-space: nowrap;
-      box-shadow: var(--shadow);
-    }
-
-    .badge strong {
-      color: #fff0a2;
-    }
-
-    .hint {
-      position: absolute;
-      left: 50%;
-      bottom: 28%;
-      width: 74%;
-      transform: translateX(-50%);
-      text-align: center;
-      color: rgba(255, 255, 255, 0.96);
-      font-size: 34px;
-      font-weight: 700;
-      line-height: 1.3;
-      z-index: 6;
-      text-shadow: 0 8px 20px rgba(0, 0, 0, 0.52);
-    }
-
-    .aim-area {
-      position: absolute;
-      inset: 0;
-      z-index: 4;
-    }
-
-    .goal-zone {
-      position: absolute;
-      top: 20.6%;
-      left: 7%;
-      width: 86%;
-      height: 36%;
-      z-index: 5;
-      pointer-events: none;
-    }
-
-    .keeper {
-      position: absolute;
-      left: 50%;
-      bottom: -40%;
-      width: 57.5%;
-      transform: translateX(calc(-50% + var(--keeper-x, 0px))) scale(var(--keeper-scale, 1));
-      transform-origin: center center;
-      filter: drop-shadow(0 14px 14px rgba(0, 0, 0, 0.28));
-      transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
-      z-index: 6;
-      pointer-events: none;
-    }
-
-    .ball {
-      position: absolute;
-      left: 50%;
-      bottom: 11.8%;
-      width: 34%;
-      transform: translate(calc(-50% + var(--ball-x, 0px)), var(--ball-y, 0px)) scale(var(--ball-scale, 1)) rotate(var(--ball-rotate, 0deg));
-      transform-origin: center center;
-      filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.32));
-      z-index: 6;
-      pointer-events: none;
-    }
-
-    .shoot {
-      position: absolute;
-      left: 50%;
-      bottom: 3.8%;
-      width: 86%;
-      transform: translateX(-50%);
-      filter: drop-shadow(0 14px 20px rgba(255, 241, 159, 0.24));
-      transition: transform 180ms ease, opacity 180ms ease;
-      z-index: 6;
-    }
-
-    .shoot[disabled] {
-      opacity: 0.56;
-      cursor: not-allowed;
-    }
-
-    .banner {
-      position: absolute;
-      top: 14.2%;
-      left: 50%;
-      transform: translateX(-50%) scale(0.84);
-      text-align: center;
-      opacity: 0;
-      transition: opacity 220ms ease, transform 220ms ease;
-      z-index: 7;
-      pointer-events: none;
-    }
-
-    .banner.show {
-      opacity: 1;
-      transform: translateX(-50%) scale(1);
-    }
-
-    .banner-text {
-      margin: 0;
-      font-family: "Arial Black", Arial, sans-serif;
-      font-size: 124px;
-      line-height: 0.94;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      text-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
-    }
-
-    .banner.goal .banner-text {
-      color: #eefdf6;
-      -webkit-text-stroke: 4px #1cb37d;
-    }
-
-    .banner.save .banner-text {
-      color: #fff0ea;
-      -webkit-text-stroke: 4px #ff7048;
-    }
-
-    .banner.miss .banner-text {
-      color: #fff6e8;
-      -webkit-text-stroke: 4px #ff8d3a;
-    }
-
-    .banner-sub {
-      margin-top: 8px;
-      font-family: "Arial Black", Arial, sans-serif;
-      font-size: 20px;
-      letter-spacing: 0.32em;
-      text-transform: uppercase;
-      color: #fff1a6;
-    }
-
-    .status {
-      position: absolute;
-      left: 50%;
-      bottom: 13%;
-      transform: translateX(-50%);
-      padding: 20px 24px;
-      width: 76%;
-      border-radius: 32px;
-      background: rgba(5, 12, 25, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      backdrop-filter: blur(8px);
-      font-size: 28px;
-      font-weight: 700;
-      line-height: 1.4;
-      text-align: center;
-      text-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-      z-index: 6;
-    }
-
-    .status.hidden {
-      display: none;
-    }
-
-    .overlay {
-      z-index: 10;
-      display: grid;
-      place-items: center;
-      background: var(--overlay);
-      backdrop-filter: blur(6px);
-    }
-
-    .popup {
-      position: relative;
-      width: min(88%, 520px);
-      text-align: center;
-      transform: translateY(10px) scale(var(--popup-scale, 1));
-      transform-origin: center center;
-      transition: transform 220ms ease;
-    }
-
-    .overlay:not(.hidden) .popup {
-      transform: translateY(0) scale(var(--popup-scale, 1));
-    }
-
-    .popup-card {
-      width: 100%;
-      display: block;
-    }
-
-    .popup-content {
-      position: absolute;
-      inset: 10% 10% 18%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      text-align: center;
-    }
-
-    .popup.kickout .popup-content {
-      inset: auto;
-    }
-
-    .popup.win .popup-content {
-      inset: 32.8% 12% 21.5%;
-      gap: 18px;
-      justify-content: flex-start;
-    }
-
-    .popup.win {
-      width: min(92%, 580px);
-      --popup-scale: 1.26;
-    }
-
-    .popup-title {
-      margin: 0;
-      font-family: "Arial Black", Arial, sans-serif;
-      font-size: 60px;
-      line-height: 1;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .popup.win .popup-title {
-      color: var(--goal);
-      display: none;
-    }
-
-    .popup.lose .popup-title {
-      color: var(--accent);
-    }
-
-    .popup.lose {
-      width: min(82%, 460px);
-      padding: 48px 34px 136px;
-      border-radius: 34px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 252, 0.98));
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.26);
-    }
-
-    .popup.lose .popup-card {
-      display: none;
-    }
-
-    .popup.lose .popup-content {
-      position: static;
-      inset: auto;
-      display: block;
-    }
-
-    .popup.lose .popup-title {
-      font-size: 72px;
-      line-height: 0.95;
-    }
-
-    .popup-copy {
-      margin: 12px 0 0;
-      width: 82%;
-      color: #173057;
-      font-size: 24px;
-      line-height: 1.5;
-    }
-
-    .popup.win .popup-copy {
-      margin-top: 0;
-      width: 72%;
-      font-size: 28px;
-      line-height: 1.38;
-    }
-
-    .popup.lose .popup-copy {
-      width: 100%;
-      margin-top: 14px;
-      color: #22395d;
-      font-size: 28px;
-      line-height: 1.45;
-    }
-
-    .prize {
-      margin-top: 0;
-      padding: 24px 26px;
-      width: 84%;
-      border-radius: 28px;
-      background: linear-gradient(180deg, rgba(255, 252, 224, 0.98), rgba(255, 243, 196, 0.98));
-      color: #173057;
-      font-family: "Arial Black", Arial, sans-serif;
-      font-size: 40px;
-      line-height: 1.08;
-      text-transform: uppercase;
-      box-shadow: 0 18px 28px rgba(226, 183, 43, 0.2);
-    }
-
-    .popup.win .prize {
-      width: 88%;
-      font-size: 44px;
-    }
-
-    .popup-close {
-      position: absolute;
-      left: 50%;
-      bottom: 6.2%;
-      transform: translateX(-50%);
-      min-width: 240px;
-      padding: 20px 30px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #ff885d 0%, #ff6438 100%);
-      color: white;
-      font-family: "Arial Black", Arial, sans-serif;
-      font-size: 24px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      box-shadow: 0 14px 22px rgba(255, 95, 58, 0.24);
-    }
-
-    .popup.win .popup-close {
-      bottom: 10.2%;
-      min-width: 280px;
-      padding: 24px 36px;
-      background: linear-gradient(180deg, #20c287 0%, #17a870 100%);
-      font-size: 28px;
-      box-shadow: 0 14px 22px rgba(23, 168, 112, 0.22);
-    }
-
-    .popup.lose .popup-close {
-      bottom: 24px;
-      width: 66%;
-      padding-block: 28px;
-    }
-
-    .confetti-layer {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      pointer-events: none;
-      z-index: 7;
-    }
-
-    .confetti {
-      position: absolute;
-      top: -12%;
-      width: 10px;
-      height: 24px;
-      border-radius: 999px;
-      opacity: 0;
-      animation: confettiFall 1500ms linear forwards;
-    }
-
-    .spark {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 240, 162, 0.94) 44%, rgba(255, 240, 162, 0) 74%);
-      box-shadow: 0 0 20px rgba(255, 240, 162, 0.72);
-      animation: sparkOut 620ms ease-out forwards;
-      z-index: 7;
-      pointer-events: none;
-    }
-
-    @keyframes confettiFall {
-      0% {
-        opacity: 0;
-        transform: translate3d(0, -20px, 0) rotate(0deg);
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>World Cup Shoot</title>
+    <style>
+      :root {
+        --safe-white: #f7fbff;
+        --soft-white: rgba(247, 251, 255, 0.84);
+        --night: #050b17;
+        --overlay: rgba(3, 8, 18, 0.6);
+        --accent: #ff6d43;
+        --goal: #29c98b;
+        --shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+        --body-font: "Trebuchet MS", "Segoe UI", Verdana, sans-serif;
+        --display-font: "Arial Black", "Trebuchet MS", "Segoe UI", sans-serif;
       }
 
-      8% {
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        overflow: hidden;
+        background: radial-gradient(
+          circle at top,
+          #17386d 0%,
+          #071326 38%,
+          #02050b 100%
+        );
+        font-family: var(--body-font);
+        color: var(--safe-white);
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        width: 100vw;
+        height: 100vh;
+        padding: 0;
+      }
+
+      button {
+        border: 0;
+        background: none;
+        padding: 0;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .stage-shell {
+        position: relative;
+        width: calc(1080px * var(--stage-scale, 1));
+        height: calc(1920px * var(--stage-scale, 1));
+        overflow: hidden;
+      }
+
+      .app {
+        position: relative;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0b1527;
+        user-select: none;
+        transform: scale(var(--stage-scale, 1));
+        transform-origin: top left;
+        will-change: transform;
+      }
+
+      .bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .intro {
+        z-index: 8;
+        background: linear-gradient(
+          180deg,
+          rgba(3, 10, 22, 0.08) 0%,
+          rgba(3, 10, 22, 0.32) 100%
+        );
+      }
+
+      .brand {
+        position: absolute;
+        top: 0.4%;
+        left: 50%;
+        width: 78%;
+        min-width: 32px;
+        transform: translateX(-50%);
+        filter: drop-shadow(0 8px 12px rgba(14, 42, 98, 0.45));
+        pointer-events: none;
+      }
+
+      .intro .brand {
+        top: 3.2%;
+        width: 156%;
+      }
+
+      .game-brand {
+        top: 4.8%;
+        width: 82%;
+        z-index: 6;
+        pointer-events: none;
+      }
+
+      .title {
+        position: absolute;
+        left: 50%;
+        width: 70%;
+        transform: translateX(-50%);
+        filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.28));
+      }
+
+      .intro .title {
+        top: 11.2%;
+      }
+
+      .intro-copy {
+        position: absolute;
+        left: 50%;
+        top: 40.8%;
+        width: 82%;
+        transform: translateX(-50%);
+        text-align: center;
+        text-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+      }
+
+      .intro-copy h1 {
+        margin: 0 0 210px;
+        font-family: var(--display-font);
+        font-size: 92px;
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .intro-copy p {
+        margin: 0 auto;
+        width: 96%;
+        color: var(--soft-white);
+        font-size: 46px;
+        line-height: 1.38;
+      }
+
+      .cta {
+        position: absolute;
+        left: 50%;
+        width: 82%;
+        transform: translateX(-50%);
+        filter: drop-shadow(0 14px 18px rgba(255, 241, 159, 0.24));
+        transition: transform 180ms ease;
+      }
+
+      .cta:active,
+      .shoot:active {
+        transform: translateX(-50%) scale(0.97);
+      }
+
+      .popup-close:active,
+      .submit-button:active {
+        transform: scale(0.97);
+      }
+
+      .intro .cta {
+        top: 55.4%;
+        width: 64%;
+      }
+
+      .cta img,
+      .shoot img {
+        display: block;
+        width: 100%;
+      }
+
+      .game {
+        z-index: 3;
+      }
+
+      .game .title {
+        top: 11%;
+        width: 60%;
+      }
+
+      .badge-row {
+        position: absolute;
+        top: 2.4%;
+        left: 6%;
+        right: 6%;
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        z-index: 6;
+      }
+
+      .badge {
+        flex: 0 0 calc(50% - 9px);
+        padding: 20px 18px;
+        border-radius: 999px;
+        background: rgba(5, 12, 25, 0.54);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        font-family: var(--display-font);
+        font-size: 32px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        text-align: center;
+        white-space: nowrap;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+
+      .badge strong {
+        color: #fff0a2;
+      }
+
+      .hint {
+        position: absolute;
+        left: 50%;
+        top: 67.8%;
+        width: 68%;
+        transform: translateX(-50%);
+        text-align: center;
+        color: #f9fcff;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.28;
+        padding: 16px 22px;
+        border-radius: 24px;
+        background: linear-gradient(
+          180deg,
+          rgba(4, 12, 28, 0.82) 0%,
+          rgba(12, 30, 63, 0.78) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: var(--shadow);
+        z-index: 6;
+        text-shadow: 0 8px 20px rgba(0, 0, 0, 0.52);
+      }
+
+      .hint strong {
+        color: #fff0a2;
+      }
+
+      .aim-area {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+      }
+
+      .goal-zone {
+        position: absolute;
+        top: 20.6%;
+        left: 7%;
+        width: 86%;
+        height: 36%;
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      .keeper {
+        position: absolute;
+        left: 50%;
+        bottom: -40%;
+        width: 57.5%;
+        transform: translate(
+            calc(-50% + var(--keeper-x, 0px)),
+            var(--keeper-y, 0px)
+          )
+          scale(var(--keeper-scale, 1));
+        transform-origin: center center;
+        filter: drop-shadow(0 14px 14px rgba(0, 0, 0, 0.28));
+        transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        z-index: 6;
+        pointer-events: none;
+      }
+
+      .ball {
+        position: absolute;
+        left: 50%;
+        bottom: 11.8%;
+        width: 34%;
+        transform: translate(
+            calc(-50% + var(--ball-x, 0px)),
+            var(--ball-y, 0px)
+          )
+          scale(var(--ball-scale, 1)) rotate(var(--ball-rotate, 0deg));
+        transform-origin: center center;
+        filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.32));
+        z-index: 6;
+        pointer-events: none;
+      }
+
+      .shoot {
+        position: absolute;
+        left: 50%;
+        bottom: 3.8%;
+        width: 86%;
+        transform: translateX(-50%);
+        filter: drop-shadow(0 14px 20px rgba(255, 241, 159, 0.24));
+        transition:
+          transform 180ms ease,
+          opacity 180ms ease;
+        z-index: 6;
+      }
+
+      .shoot[disabled] {
+        opacity: 0.56;
+        cursor: not-allowed;
+      }
+
+      .banner {
+        position: absolute;
+        top: 34%;
+        left: 50%;
+        width: 68%;
+        padding: 24px 28px 20px;
+        border-radius: 36px;
+        background: rgba(8, 18, 40, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(14px);
+        box-shadow: var(--shadow);
+        transform: translateX(-50%) scale(0.84);
+        text-align: center;
+        opacity: 0;
+        transition:
+          opacity 220ms ease,
+          transform 220ms ease;
+        z-index: 7;
+        pointer-events: none;
+      }
+
+      .banner.show {
         opacity: 1;
+        transform: translateX(-50%) scale(1);
       }
 
-      100% {
+      .banner-text {
+        margin: 0;
+        font-family: var(--display-font);
+        font-size: 104px;
+        line-height: 0.96;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
+      }
+
+      .banner.goal .banner-text {
+        color: #eefdf6;
+        -webkit-text-stroke: 4px #1cb37d;
+      }
+
+      .banner.save .banner-text {
+        color: #fff0ea;
+        -webkit-text-stroke: 4px #ff7048;
+      }
+
+      .banner.miss .banner-text {
+        color: #fff6e8;
+        -webkit-text-stroke: 4px #ff8d3a;
+      }
+
+      .banner-sub {
+        margin-top: 12px;
+        font-family: var(--display-font);
+        font-size: 22px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: #fff1a6;
+      }
+
+      .status {
+        position: absolute;
+        left: 50%;
+        top: 28.8%;
+        transform: translateX(-50%);
+        padding: 20px 24px;
+        width: 72%;
+        border-radius: 32px;
+        background: rgba(5, 12, 25, 0.84);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(8px);
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.4;
+        text-align: center;
+        text-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        z-index: 6;
+      }
+
+      .status.hidden {
+        display: none;
+      }
+
+      .overlay {
+        z-index: 10;
+        display: grid;
+        place-items: center;
+        background: var(--overlay);
+        backdrop-filter: blur(6px);
+      }
+
+      .popup {
+        position: relative;
+        width: min(88%, 560px);
+        padding: 48px 38px 40px;
+        border-radius: 42px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98) 0%,
+          rgba(241, 247, 255, 0.98) 100%
+        );
+        box-shadow: 0 28px 54px rgba(0, 0, 0, 0.28);
+        text-align: center;
+        transform: translateY(10px) scale(var(--popup-scale, 1));
+        transform-origin: center center;
+        transition: transform 220ms ease;
+      }
+
+      .overlay:not(.hidden) .popup {
+        transform: translateY(0) scale(var(--popup-scale, 1));
+      }
+
+      .popup-card {
+        width: 100%;
+        display: block;
+      }
+
+      .popup-content {
+        position: static;
+        inset: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: center;
+        gap: 18px;
+      }
+
+      .popup.win .popup-content {
+        position: absolute;
+        inset: 32.8% 12% 21.5%;
+        gap: 18px;
+      }
+
+      .popup.win {
+        width: min(92%, 580px);
+        padding: 0;
+        border-radius: 0;
+        background: none;
+        box-shadow: none;
+        --popup-scale: 1.26;
+      }
+
+      .popup-title {
+        margin: 0;
+        font-family: var(--display-font);
+        font-size: 60px;
+        line-height: 1.02;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .popup.win .popup-title {
+        color: var(--goal);
+        display: none;
+      }
+
+      .popup.lose .popup-title {
+        color: var(--accent);
+      }
+
+      .popup.lose {
+        width: min(82%, 500px);
+      }
+
+      .popup-copy {
+        margin: 0;
+        width: 100%;
+        color: #173057;
+        font-size: 27px;
+        line-height: 1.5;
+      }
+
+      .popup.win .popup-copy {
+        width: 72%;
+        color: #214166;
+        font-size: 28px;
+        line-height: 1.38;
+      }
+
+      .prize {
+        margin-top: 0;
+        padding: 24px 26px;
+        width: 100%;
+        border-radius: 28px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 252, 224, 0.98),
+          rgba(255, 243, 196, 0.98)
+        );
+        color: #173057;
+        font-family: var(--display-font);
+        font-size: 40px;
+        line-height: 1.08;
+        text-transform: uppercase;
+        white-space: nowrap;
+        box-shadow: 0 18px 28px rgba(226, 183, 43, 0.2);
+      }
+
+      .popup.win .prize {
+        width: 92%;
+        padding: 18px 20px;
+        font-size: 34px;
+        line-height: 1;
+      }
+
+      .popup-close {
+        position: static;
+        min-width: 260px;
+        padding: 20px 30px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #ff885d 0%, #ff6438 100%);
+        color: white;
+        font-family: var(--display-font);
+        font-size: 24px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        box-shadow: 0 14px 22px rgba(255, 95, 58, 0.24);
+      }
+
+      .popup.win .popup-close {
+        position: absolute;
+        left: 50%;
+        bottom: 10.2%;
+        transform: translateX(-50%);
+        min-width: 430px;
+        padding: 28px 44px;
+        background: linear-gradient(180deg, #20c287 0%, #17a870 100%);
+        font-size: 30px;
+        box-shadow: 0 14px 22px rgba(23, 168, 112, 0.22);
+      }
+
+      .popup.lose .popup-card,
+      .popup.form .popup-card {
+        display: none;
+      }
+
+      .popup-actions {
+        margin-top: 28px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .popup-eyebrow {
+        font-family: var(--display-font);
+        font-size: 20px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #4f6f93;
+      }
+
+      .popup.form {
+        width: min(90%, 620px);
+        background: linear-gradient(180deg, #eef6ff 0%, #ffffff 100%);
+      }
+
+      .popup.form .popup-title {
+        color: #173057;
+        font-size: 52px;
+        line-height: 1.04;
+      }
+
+      .popup.form .popup-copy {
+        color: #1f3c68;
+        font-size: 28px;
+      }
+
+      .reward-form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-top: 8px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        text-align: left;
+      }
+
+      .field span {
+        color: #173057;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .field input {
+        width: 100%;
+        padding: 20px 22px;
+        border-radius: 20px;
+        border: 1px solid rgba(23, 48, 87, 0.18);
+        background: rgba(255, 255, 255, 0.92);
+        color: #173057;
+        font-family: var(--body-font);
+        font-size: 24px;
+        outline: none;
+        transition:
+          border-color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      .field input:focus {
+        border-color: rgba(32, 194, 135, 0.72);
+        box-shadow: 0 0 0 5px rgba(32, 194, 135, 0.12);
+      }
+
+      .form-note {
+        margin: 4px 0 0;
+        min-height: 32px;
+        color: #1d7d58;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .submit-button {
+        width: 100%;
+        padding: 24px 32px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #173e7b 0%, #0f2f61 100%);
+        color: #ffffff;
+        font-family: var(--display-font);
+        font-size: 26px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        box-shadow: 0 14px 22px rgba(15, 47, 97, 0.24);
+      }
+
+      .confetti-layer {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 7;
+      }
+
+      .confetti {
+        position: absolute;
+        top: -12%;
+        width: 10px;
+        height: 24px;
+        border-radius: 999px;
         opacity: 0;
-        transform: translate3d(var(--drift, 0px), 115vh, 0) rotate(var(--spin, 540deg));
-      }
-    }
-
-    @keyframes sparkOut {
-      0% {
-        opacity: 0.96;
-        transform: scale(0.5);
+        animation: confettiFall 1500ms linear forwards;
       }
 
-      100% {
-        opacity: 0;
-        transform: scale(2.6);
+      .spark {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 1) 0%,
+          rgba(255, 240, 162, 0.94) 44%,
+          rgba(255, 240, 162, 0) 74%
+        );
+        box-shadow: 0 0 20px rgba(255, 240, 162, 0.72);
+        animation: sparkOut 620ms ease-out forwards;
+        z-index: 7;
+        pointer-events: none;
       }
-    }
 
-  </style>
-</head>
-<body>
-  <div class="stage-shell">
-    <main class="app">
-      <img class="bg" src="assets/layout/13.png" alt="">
+      @keyframes confettiFall {
+        0% {
+          opacity: 0;
+          transform: translate3d(0, -20px, 0) rotate(0deg);
+        }
 
-    <section class="screen intro" id="intro">
-      <img class="brand" src="assets/layout/12.png" alt="Brand">
-      <img class="title" src="assets/layout/11.png" alt="World Cup">
+        8% {
+          opacity: 1;
+        }
 
-      <div class="intro-copy">
-        <h1>Penalty Shoot</h1>
-        <p>
-          Sẵn sàng cho cú sút quyết định.
-          Nhấn <strong>JOIN NOW</strong> để bắt đầu lượt chơi của bạn.
-        </p>
-      </div>
-
-      <button class="cta" id="joinButton" type="button" aria-label="Join now">
-        <img src="assets/layout/16.png" alt="Join now">
-      </button>
-    </section>
-
-    <section class="screen game hidden" id="game">
-      <div class="badge-row">
-        <div class="badge">Lượt chơi: <strong id="playsText">10/10</strong></div>
-        <div class="badge">Trạng thái: <strong id="resultText">Sẵn sàng</strong></div>
-      </div>
-
-      <img class="title" src="assets/layout/11.png" alt="World Cup">
-
-      <div class="aim-area" id="aimArea">
-        <div class="goal-zone" id="goalZone">
-          <img class="keeper" id="keeper" src="assets/layout/10.png" alt="Goalkeeper">
-        </div>
-        <img class="ball" id="ball" src="assets/layout/9.png" alt="Ball">
-        <div class="confetti-layer" id="confetti"></div>
-        <div class="banner" id="banner">
-          <p class="banner-text" id="bannerText">GOAL</p>
-          <div class="banner-sub" id="bannerSub">Prize unlocked</div>
-        </div>
-      </div>
-
-      <div class="status hidden" id="statusText"></div>
-
-      <div class="hint">
-        Chạm vào khung thành để chọn hướng sút, hoặc dùng nút <strong>SHOOT</strong> để đá nhanh.
-      </div>
-
-      <button class="shoot" id="shootButton" type="button" aria-label="Shoot">
-        <img src="assets/layout/17.png" alt="Shoot">
-      </button>
-    </section>
-
-    <section class="screen overlay hidden" id="overlay">
-      <div class="popup win hidden" id="winPopup">
-        <img class="popup-card" src="assets/layout/18.png" alt="">
-        <div class="popup-content">
-          <h2 class="popup-title">Goal</h2>
-          <p class="popup-copy">Bạn đã ghi bàn thành công và nhận được phần quà từ hệ thống.</p>
-          <div class="prize" id="prizeText">Voucher 10%</div>
-        </div>
-        <button class="popup-close" id="closeWin" type="button">Đóng</button>
-      </div>
-
-      <div class="popup lose hidden kickout" id="losePopup">
-        <img class="popup-card" src="assets/layout/18.png" alt="">
-        <div class="popup-content">
-          <h2 class="popup-title">Save</h2>
-          <p class="popup-copy">Thủ môn đã cản phá cú sút của bạn. Chúc bạn may mắn lần sau.</p>
-        </div>
-        <button class="popup-close" id="closeLose" type="button">Đóng</button>
-      </div>
-    </section>
-    </main>
-  </div>
-
-  <script>
-    const STORAGE_KEY = "world-cup-shoot-plays-used";
-    const TOTAL_PLAYS = 10;
-    const SHOT_TRAVEL_MS = 980;
-    const RESULT_DELAY = 1680;
-    const BANNER_DELAY = SHOT_TRAVEL_MS - 40;
-    const GOAL_ZONE_LIMITS = {
-      minX: 0.04,
-      maxX: 0.96,
-      minY: 0.08,
-      maxY: 0.78
-    };
-    const GOAL_MOUTH_LIMITS = {
-      minX: 0.14,
-      maxX: 0.86,
-      minY: 0.28,
-      maxY: 0.67
-    };
-    const GOAL_SUCCESS_RATE = 0.38;
-    const KEEPER_SAVE_REACH = {
-      high: 0.06,
-      mid: 0.1,
-      low: 0.14
-    };
-    const SHOT_JITTER = {
-      x: 0.06,
-      y: 0.05
-    };
-    const GOAL_ESCAPE_MARGIN = 0.05;
-    const keeperAssets = [
-      "assets/layout/10.png",
-      "assets/layout/14.png",
-      "assets/layout/15.png"
-    ];
-    const prizes = [
-      { name: "Voucher 10%", weight: 50 },
-      { name: "Voucher 20%", weight: 30 },
-      { name: "Freeship", weight: 15 },
-      { name: "Quà đặc biệt", weight: 5 }
-    ];
-
-    const state = {
-      introVisible: true,
-      playing: false,
-      played: false,
-      remainingPlays: TOTAL_PLAYS,
-      keeperAsset: keeperAssets[0],
-      keeperTick: Math.random() * Math.PI * 2,
-      keeperOffset: 0,
-      keeperFrozen: false,
-      keeperFrame: 0,
-      ballFlight: null
-    };
-
-    const intro = document.getElementById("intro");
-    const game = document.getElementById("game");
-    const joinButton = document.getElementById("joinButton");
-    const aimArea = document.getElementById("aimArea");
-    const goalZone = document.getElementById("goalZone");
-    const keeper = document.getElementById("keeper");
-    const ball = document.getElementById("ball");
-    const playsText = document.getElementById("playsText");
-    const resultText = document.getElementById("resultText");
-    const statusText = document.getElementById("statusText");
-    const hintText = document.querySelector(".hint");
-    const shootButton = document.getElementById("shootButton");
-    const banner = document.getElementById("banner");
-    const bannerText = document.getElementById("bannerText");
-    const bannerSub = document.getElementById("bannerSub");
-    const confetti = document.getElementById("confetti");
-    const overlay = document.getElementById("overlay");
-    const winPopup = document.getElementById("winPopup");
-    const losePopup = document.getElementById("losePopup");
-    const prizeText = document.getElementById("prizeText");
-    const closeWin = document.getElementById("closeWin");
-    const closeLose = document.getElementById("closeLose");
-    const loseTitle = losePopup.querySelector(".popup-title");
-    const loseCopy = losePopup.querySelector(".popup-copy");
-
-    function resizeStage() {
-      const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
-      document.documentElement.style.setProperty("--stage-scale", String(scale));
-    }
-
-    function weightedPick(pool) {
-      const total = pool.reduce((sum, item) => sum + item.weight, 0);
-      let cursor = Math.random() * total;
-
-      for (const item of pool) {
-        cursor -= item.weight;
-        if (cursor <= 0) {
-          return item;
+        100% {
+          opacity: 0;
+          transform: translate3d(var(--drift, 0px), 115vh, 0)
+            rotate(var(--spin, 540deg));
         }
       }
 
-      return pool[pool.length - 1];
-    }
-
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value));
-    }
-
-    function getStoredPlaysUsed() {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw === null) {
-        return 0;
-      }
-
-      const parsed = Number.parseInt(raw, 10);
-      if (Number.isNaN(parsed)) {
-        return 0;
-      }
-
-      return clamp(parsed, 0, TOTAL_PLAYS);
-    }
-
-    function setStoredPlaysUsed(playsUsed) {
-      window.localStorage.setItem(STORAGE_KEY, String(clamp(playsUsed, 0, TOTAL_PLAYS)));
-    }
-
-    function isWithinLimits(point, limits) {
-      return point.x >= limits.minX && point.x <= limits.maxX && point.y >= limits.minY && point.y <= limits.maxY;
-    }
-
-    function randomBetween(min, max) {
-      return min + (Math.random() * (max - min));
-    }
-
-    function pickKeeperAsset() {
-      const nextOptions = keeperAssets.filter((asset) => asset !== state.keeperAsset);
-      const pool = nextOptions.length ? nextOptions : keeperAssets;
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
-
-    function isInsideRect(clientX, clientY, rect) {
-      return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
-    }
-
-    function setStatus(message) {
-      if (!message) {
-        statusText.textContent = "";
-        statusText.classList.add("hidden");
-        return;
-      }
-
-      statusText.textContent = message;
-      statusText.classList.remove("hidden");
-    }
-
-    function syncPlayState() {
-      const playsUsed = getStoredPlaysUsed();
-      state.remainingPlays = TOTAL_PLAYS - playsUsed;
-      state.played = state.remainingPlays <= 0;
-      playsText.textContent = `${state.remainingPlays}/${TOTAL_PLAYS}`;
-      shootButton.disabled = state.played || state.playing;
-      shootButton.classList.toggle("hidden", state.played);
-
-      if (state.played) {
-        resultText.textContent = "Hết lượt";
-        hintText.textContent = `Bạn đã dùng hết ${TOTAL_PLAYS} lượt chơi trên thiết bị này.`;
-        setStatus("Hãy reset logic demo nếu muốn chơi lại từ đầu.");
-      } else if (!state.playing) {
-        resultText.textContent = "Sẵn sàng";
-        hintText.innerHTML = "Chạm vào bên trong khung gôn để chọn hướng sút, hoặc dùng nút <strong>SHOOT</strong> để đá nhanh.";
-        setStatus("");
-      }
-    }
-
-    function resetBall() {
-      if (state.ballFlight) {
-        state.ballFlight.cancel();
-        state.ballFlight = null;
-      }
-      ball.style.setProperty("--ball-x", "0px");
-      ball.style.setProperty("--ball-y", "0px");
-      ball.style.setProperty("--ball-scale", "1");
-      ball.style.setProperty("--ball-rotate", "0deg");
-    }
-
-    function resetKeeper(changeAsset = false) {
-      state.keeperTick = 0;
-      state.keeperFrame = 0;
-      state.keeperOffset = 0;
-      state.keeperFrozen = false;
-      if (changeAsset || !state.keeperAsset) {
-        state.keeperAsset = pickKeeperAsset();
-      }
-      keeper.src = state.keeperAsset;
-      keeper.style.setProperty("--keeper-x", "0px");
-      keeper.style.setProperty("--keeper-scale", "1");
-    }
-
-    function resetRoundVisuals(changeAsset = false) {
-      resetBall();
-      resetKeeper(changeAsset);
-      hideBanner();
-      confetti.innerHTML = "";
-    }
-
-    function getKeeperTravelRange() {
-      return goalZone.clientWidth * 0.28;
-    }
-
-    function hideBanner() {
-      banner.className = "banner";
-    }
-
-    function showBanner(type) {
-      const bannerMode = type === "win" ? "goal" : type;
-      banner.className = `banner ${bannerMode} show`;
-      bannerText.textContent = type === "win" ? "GOAL" : type === "miss" ? "MISS" : "SAVE";
-      bannerSub.textContent = type === "win"
-        ? "Prize unlocked"
-        : type === "miss"
-          ? "Shot went wide"
-          : "Try again next time";
-    }
-
-    function openPopup(type, prize) {
-      hideBanner();
-      overlay.classList.remove("hidden");
-      winPopup.classList.add("hidden");
-      losePopup.classList.add("hidden");
-
-      if (type === "win") {
-        prizeText.textContent = prize.name;
-        winPopup.classList.remove("hidden");
-      } else {
-        loseTitle.textContent = type === "miss" ? "Miss" : "Save";
-        loseCopy.textContent = type === "miss"
-          ? "Cú sút đã đi ra ngoài khung thành. Hãy canh lại hướng sút ở lượt tiếp theo."
-          : "Thủ môn đã cản phá cú sút của bạn. Chúc bạn may mắn lần sau.";
-        losePopup.classList.remove("hidden");
-      }
-    }
-
-    function hidePopup() {
-      overlay.classList.add("hidden");
-      winPopup.classList.add("hidden");
-      losePopup.classList.add("hidden");
-    }
-
-    function closePopup() {
-      hidePopup();
-      if (!state.playing) {
-        resetRoundVisuals(true);
-      }
-    }
-
-    function spawnConfetti() {
-      confetti.innerHTML = "";
-      const colors = ["#ff6d43", "#fff0a2", "#21c488", "#ffffff", "#69bcff"];
-
-      for (let i = 0; i < 28; i += 1) {
-        const node = document.createElement("span");
-        node.className = "confetti";
-        node.style.left = `${Math.random() * 100}%`;
-        node.style.background = colors[i % colors.length];
-        node.style.setProperty("--drift", `${(Math.random() - 0.5) * 160}px`);
-        node.style.setProperty("--spin", `${(Math.random() - 0.5) * 900}deg`);
-        node.style.animationDelay = `${Math.random() * 180}ms`;
-        confetti.appendChild(node);
-      }
-    }
-
-    function sparkAt(clientX, clientY) {
-      const rect = aimArea.getBoundingClientRect();
-      const spark = document.createElement("span");
-      spark.className = "spark";
-      spark.style.left = `${clientX - rect.left - 7}px`;
-      spark.style.top = `${clientY - rect.top - 7}px`;
-      aimArea.appendChild(spark);
-
-      window.setTimeout(() => spark.remove(), 700);
-    }
-
-    function normalizeAim(clientX, clientY) {
-      const rect = goalZone.getBoundingClientRect();
-      const x = (clientX - rect.left) / rect.width;
-      const y = (clientY - rect.top) / rect.height;
-
-      return {
-        x: clamp(x, GOAL_ZONE_LIMITS.minX, GOAL_ZONE_LIMITS.maxX),
-        y: clamp(y, GOAL_ZONE_LIMITS.minY, GOAL_ZONE_LIMITS.maxY)
-      };
-    }
-
-    function autoAim() {
-      const xMarks = [0.18, 0.34, 0.5, 0.66, 0.82];
-      const yMarks = [0.34, 0.48, 0.6];
-      return {
-        x: xMarks[Math.floor(Math.random() * xMarks.length)],
-        y: yMarks[Math.floor(Math.random() * yMarks.length)]
-      };
-    }
-
-    function isAimInsideGoalMouth(aim) {
-      return isWithinLimits(aim, GOAL_MOUTH_LIMITS);
-    }
-
-    function getKeeperNormalizedX() {
-      const range = getKeeperTravelRange();
-      if (!range) {
-        return 0.5;
-      }
-
-      return clamp(0.5 + (state.keeperOffset / (range * 2)), GOAL_MOUTH_LIMITS.minX, GOAL_MOUTH_LIMITS.maxX);
-    }
-
-    function getKeeperSaveReach(aim) {
-      if (aim.y <= 0.38) {
-        return KEEPER_SAVE_REACH.high;
-      }
-
-      if (aim.y <= 0.54) {
-        return KEEPER_SAVE_REACH.mid;
-      }
-
-      return KEEPER_SAVE_REACH.low;
-    }
-
-    function jitterAim(aim, jitter = SHOT_JITTER, limits = GOAL_MOUTH_LIMITS) {
-      return {
-        x: clamp(aim.x + randomBetween(-jitter.x, jitter.x), limits.minX, limits.maxX),
-        y: clamp(aim.y + randomBetween(-jitter.y, jitter.y), limits.minY, limits.maxY)
-      };
-    }
-
-    function getSaveImpactAim(aim, keeperX) {
-      const saveReach = getKeeperSaveReach(aim);
-      const impactX = keeperX + randomBetween(-saveReach * 0.5, saveReach * 0.5);
-      return {
-        x: clamp(impactX, GOAL_MOUTH_LIMITS.minX + 0.03, GOAL_MOUTH_LIMITS.maxX - 0.03),
-        y: clamp(Math.max(aim.y, randomBetween(0.42, 0.5)), 0.38, 0.62)
-      };
-    }
-
-    function getGoalImpactAim(aim, keeperX) {
-      const goalAim = jitterAim(aim);
-      const saveReach = getKeeperSaveReach(goalAim) + GOAL_ESCAPE_MARGIN;
-      const isTooCloseToKeeper = Math.abs(goalAim.x - keeperX) <= saveReach;
-
-      if (!isTooCloseToKeeper) {
-        return goalAim;
-      }
-
-      const shootRight = goalAim.x >= keeperX;
-      return {
-        x: clamp(
-          keeperX + ((shootRight ? 1 : -1) * randomBetween(saveReach, saveReach + 0.12)),
-          GOAL_MOUTH_LIMITS.minX,
-          GOAL_MOUTH_LIMITS.maxX
-        ),
-        y: clamp(goalAim.y - randomBetween(0.02, 0.05), GOAL_MOUTH_LIMITS.minY, GOAL_MOUTH_LIMITS.maxY)
-      };
-    }
-
-    function resolveShotOutcome(aim) {
-      if (!isAimInsideGoalMouth(aim)) {
-        return {
-          type: "miss",
-          isWin: false,
-          prize: null,
-          visualAim: aim
-        };
-      }
-
-      const keeperX = getKeeperNormalizedX();
-      const isGoal = Math.random() < GOAL_SUCCESS_RATE;
-
-      if (!isGoal) {
-        const saveSourceAim = jitterAim(aim, { x: 0.04, y: 0.04 });
-        return {
-          type: "save",
-          isWin: false,
-          prize: null,
-          visualAim: getSaveImpactAim(saveSourceAim, keeperX)
-        };
-      }
-
-      return {
-        type: "win",
-        isWin: true,
-        prize: weightedPick(prizes),
-        visualAim: getGoalImpactAim(aim, keeperX)
-      };
-    }
-
-    function getBallStartPoint() {
-      return {
-        x: ball.offsetLeft,
-        y: ball.offsetTop + (ball.offsetHeight * 0.5)
-      };
-    }
-
-    function getGoalTargetPoint(aim) {
-      return {
-        x: goalZone.offsetLeft + (goalZone.clientWidth * aim.x),
-        y: goalZone.offsetTop + (goalZone.clientHeight * aim.y)
-      };
-    }
-
-    function animateBallFlight(shotX, shotY, shotScale, shotRotate) {
-      if (state.ballFlight) {
-        state.ballFlight.cancel();
-      }
-
-      const endRotate = Number.parseFloat(shotRotate);
-      const midX = shotX * 0.44;
-      const midY = Math.min(shotY * 0.4, shotY - (aimArea.clientHeight * 0.08));
-      const midScale = 0.74;
-
-      state.ballFlight = ball.animate([
-        { transform: "translateX(-50%) translate(0px, 0px) scale(1) rotate(0deg)" },
-        {
-          offset: 0.42,
-          transform: `translateX(-50%) translate(${midX}px, ${midY}px) scale(${midScale}) rotate(${endRotate * 0.48}deg)`
-        },
-        {
-          transform: `translateX(-50%) translate(${shotX}px, ${shotY}px) scale(${shotScale}) rotate(${endRotate}deg)`
+      @keyframes sparkOut {
+        0% {
+          opacity: 0.96;
+          transform: scale(0.5);
         }
-      ], {
-        duration: SHOT_TRAVEL_MS,
-        easing: "cubic-bezier(0.18, 0.72, 0.22, 1)",
-        fill: "forwards"
-      });
-    }
 
-    function animateKeeper(timestamp) {
-      if (!state.keeperFrame) {
-        state.keeperFrame = timestamp;
+        100% {
+          opacity: 0;
+          transform: scale(2.6);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-shell">
+      <main class="app">
+        <img class="bg" src="assets/layout/13.png" alt="" />
+
+        <section class="screen intro" id="intro">
+          <img class="brand" src="assets/layout/12.png" alt="Brand" />
+          <img class="title" src="assets/layout/11.png" alt="World Cup" />
+
+          <div class="intro-copy">
+            <h1>Penalty Shoot</h1>
+            <p>
+              Ready for the winning shot.<br />
+              Click <strong>JOIN NOW</strong> to start your game
+            </p>
+          </div>
+
+          <button
+            class="cta"
+            id="joinButton"
+            type="button"
+            aria-label="Join now"
+          >
+            <img src="assets/layout/16.png" alt="Join now" />
+          </button>
+        </section>
+
+        <section class="screen game hidden" id="game">
+          <div class="badge-row">
+            <div class="badge">
+              PLAYS: <strong id="playsText">10/10</strong>
+            </div>
+            <div class="badge">
+              STATUS: <strong id="resultText">READY</strong>
+            </div>
+          </div>
+
+          <img
+            class="brand game-brand"
+            src="assets/layout/12.png"
+            alt="Retify"
+          />
+          <img class="title" src="assets/layout/11.png" alt="World Cup" />
+
+          <div class="aim-area" id="aimArea">
+            <div class="goal-zone" id="goalZone">
+              <img
+                class="keeper"
+                id="keeper"
+                src="assets/layout/10.png"
+                alt="Goalkeeper"
+              />
+            </div>
+            <img class="ball" id="ball" src="assets/layout/9.png" alt="Ball" />
+            <div class="confetti-layer" id="confetti"></div>
+            <div class="banner" id="banner">
+              <p class="banner-text" id="bannerText">GOAL</p>
+              <div class="banner-sub" id="bannerSub">Prize unlocked</div>
+            </div>
+          </div>
+
+          <div class="status hidden" id="statusText"></div>
+
+          <div class="hint">
+            Tap inside the goal frame to choose your shot direction, or use the
+            <strong>SHOOT</strong> button for a quick kick.
+          </div>
+
+          <button
+            class="shoot"
+            id="shootButton"
+            type="button"
+            aria-label="Shoot"
+          >
+            <img src="assets/layout/17.png" alt="Shoot" />
+          </button>
+        </section>
+
+        <section class="screen overlay hidden" id="overlay">
+          <div class="popup win hidden" id="winPopup">
+            <img class="popup-card" src="assets/layout/18.png" alt="" />
+            <div class="popup-content">
+              <span class="popup-eyebrow">Goal Reward</span>
+              <h2 class="popup-title">Goal</h2>
+              <p class="popup-copy">
+                You scored successfully and received a reward from the system.
+              </p>
+              <div class="prize" id="prizeText">Voucher 10%</div>
+            </div>
+            <button class="popup-close" id="closeWin" type="button">
+              Claim reward
+            </button>
+          </div>
+
+          <div class="popup lose hidden kickout" id="losePopup">
+            <div class="popup-content">
+              <span class="popup-eyebrow">Shot Result</span>
+              <h2 class="popup-title">Save</h2>
+              <p class="popup-copy">
+                The goalkeeper saved your shot. Better luck next time.
+              </p>
+              <div class="popup-actions">
+                <button class="popup-close" id="closeLose" type="button">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="popup form hidden" id="rewardPopup">
+            <div class="popup-content">
+              <span class="popup-eyebrow">Reward Claim</span>
+              <h2 class="popup-title">Your Details</h2>
+              <p class="popup-copy">
+                Complete the form below so we can send your reward.
+              </p>
+              <div class="prize" id="rewardPrizeText">Voucher 10%</div>
+              <form class="reward-form" id="rewardForm">
+                <label class="field">
+                  <span>Name</span>
+                  <input
+                    id="rewardName"
+                    name="name"
+                    type="text"
+                    autocomplete="name"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span>Phone number</span>
+                  <input
+                    id="rewardPhone"
+                    name="phone"
+                    type="tel"
+                    autocomplete="tel"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span>Email</span>
+                  <input
+                    id="rewardEmail"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    required
+                  />
+                </label>
+                <button class="submit-button" type="submit">Submit</button>
+                <p class="form-note" id="formNote"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "world-cup-shoot-plays-used";
+      const TOTAL_PLAYS = 10;
+      const SHOT_TRAVEL_MS = 980;
+      const RESULT_DELAY = 1680;
+      const BANNER_DELAY = SHOT_TRAVEL_MS - 40;
+      const GOAL_ZONE_LIMITS = {
+        minX: 0.04,
+        maxX: 0.96,
+        minY: 0.08,
+        maxY: 0.78,
+      };
+      const GOAL_MOUTH_LIMITS = {
+        minX: 0.14,
+        maxX: 0.86,
+        minY: 0.28,
+        maxY: 0.67,
+      };
+      const GOAL_SUCCESS_RATE = 0.38;
+      const SAVE_STYLES = ["catch", "parry"];
+      const KEEPER_SAVE_REACH = {
+        high: 0.06,
+        mid: 0.1,
+        low: 0.14,
+      };
+      const SHOT_JITTER = {
+        x: 0.06,
+        y: 0.05,
+      };
+      const GOAL_ESCAPE_MARGIN = 0.05;
+      const keeperAssets = [
+        "assets/layout/10.png",
+        "assets/layout/14.png",
+        "assets/layout/15.png",
+      ];
+      const prizes = [
+        { name: "Voucher 10%", weight: 50 },
+        { name: "Voucher 20%", weight: 30 },
+        { name: "Freeship", weight: 15 },
+        { name: "Special gift", weight: 5 },
+      ];
+
+      const state = {
+        introVisible: true,
+        playing: false,
+        played: false,
+        remainingPlays: TOTAL_PLAYS,
+        keeperAsset: keeperAssets[0],
+        keeperTick: Math.random() * Math.PI * 2,
+        keeperOffset: 0,
+        keeperFrozen: false,
+        keeperFrame: 0,
+        ballFlight: null,
+      };
+
+      const intro = document.getElementById("intro");
+      const game = document.getElementById("game");
+      const joinButton = document.getElementById("joinButton");
+      const aimArea = document.getElementById("aimArea");
+      const goalZone = document.getElementById("goalZone");
+      const keeper = document.getElementById("keeper");
+      const ball = document.getElementById("ball");
+      const playsText = document.getElementById("playsText");
+      const resultText = document.getElementById("resultText");
+      const statusText = document.getElementById("statusText");
+      const hintText = document.querySelector(".hint");
+      const shootButton = document.getElementById("shootButton");
+      const banner = document.getElementById("banner");
+      const bannerText = document.getElementById("bannerText");
+      const bannerSub = document.getElementById("bannerSub");
+      const confetti = document.getElementById("confetti");
+      const overlay = document.getElementById("overlay");
+      const winPopup = document.getElementById("winPopup");
+      const losePopup = document.getElementById("losePopup");
+      const rewardPopup = document.getElementById("rewardPopup");
+      const prizeText = document.getElementById("prizeText");
+      const rewardPrizeText = document.getElementById("rewardPrizeText");
+      const closeWin = document.getElementById("closeWin");
+      const closeLose = document.getElementById("closeLose");
+      const rewardForm = document.getElementById("rewardForm");
+      const formNote = document.getElementById("formNote");
+      const loseTitle = losePopup.querySelector(".popup-title");
+      const loseCopy = losePopup.querySelector(".popup-copy");
+
+      function resizeStage() {
+        const scale = Math.min(
+          window.innerWidth / 1080,
+          window.innerHeight / 1920,
+        );
+        document.documentElement.style.setProperty(
+          "--stage-scale",
+          String(scale),
+        );
       }
 
-      const delta = timestamp - state.keeperFrame;
-      state.keeperFrame = timestamp;
+      function weightedPick(pool) {
+        const total = pool.reduce((sum, item) => sum + item.weight, 0);
+        let cursor = Math.random() * total;
 
-      if (!state.keeperFrozen) {
-        state.keeperTick += delta * 0.0014;
-        state.keeperOffset = Math.sin(state.keeperTick) * getKeeperTravelRange();
+        for (const item of pool) {
+          cursor -= item.weight;
+          if (cursor <= 0) {
+            return item;
+          }
+        }
+
+        return pool[pool.length - 1];
       }
 
-      keeper.style.setProperty("--keeper-x", `${state.keeperOffset}px`);
-      window.requestAnimationFrame(animateKeeper);
-    }
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
 
-    function moveKeeper(targetX, isWin) {
-      state.keeperFrozen = true;
-      const range = getKeeperTravelRange();
-      const catchOffset = (targetX - 0.5) * range * 2;
-      const evadeOffset = targetX < 0.5 ? range * 0.55 : range * -0.55;
-      state.keeperOffset = isWin ? evadeOffset : catchOffset;
-      keeper.style.setProperty("--keeper-x", `${state.keeperOffset}px`);
-      keeper.style.setProperty("--keeper-scale", isWin ? "0.96" : "1.03");
-    }
+      function getStoredPlaysUsed() {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw === null) {
+          return 0;
+        }
 
-    function runShot(aim) {
-      if (state.played || state.playing) {
+        const parsed = Number.parseInt(raw, 10);
+        if (Number.isNaN(parsed)) {
+          return 0;
+        }
+
+        return clamp(parsed, 0, TOTAL_PLAYS);
+      }
+
+      function setStoredPlaysUsed(playsUsed) {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          String(clamp(playsUsed, 0, TOTAL_PLAYS)),
+        );
+      }
+
+      function isWithinLimits(point, limits) {
+        return (
+          point.x >= limits.minX &&
+          point.x <= limits.maxX &&
+          point.y >= limits.minY &&
+          point.y <= limits.maxY
+        );
+      }
+
+      function randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      function pickKeeperAsset() {
+        const nextOptions = keeperAssets.filter(
+          (asset) => asset !== state.keeperAsset,
+        );
+        const pool = nextOptions.length ? nextOptions : keeperAssets;
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      function isInsideRect(clientX, clientY, rect) {
+        return (
+          clientX >= rect.left &&
+          clientX <= rect.right &&
+          clientY >= rect.top &&
+          clientY <= rect.bottom
+        );
+      }
+
+      function setStatus(message) {
+        if (!message) {
+          statusText.textContent = "";
+          statusText.classList.add("hidden");
+          return;
+        }
+
+        statusText.textContent = message;
+        statusText.classList.remove("hidden");
+      }
+
+      function syncPlayState() {
+        const playsUsed = getStoredPlaysUsed();
+        state.remainingPlays = TOTAL_PLAYS - playsUsed;
+        state.played = state.remainingPlays <= 0;
+        playsText.textContent = `${state.remainingPlays}/${TOTAL_PLAYS}`;
+        shootButton.disabled = state.played || state.playing;
+        shootButton.classList.toggle("hidden", state.played);
+
         if (state.played) {
-          setStatus(`Bạn đã dùng hết ${TOTAL_PLAYS} lượt chơi trên thiết bị này.`);
+          resultText.textContent = "FINISHED";
+          hintText.textContent = "You have no plays left.";
+          setStatus(`All ${TOTAL_PLAYS} plays on this device have been used.`);
+        } else if (!state.playing) {
+          resultText.textContent = "READY";
+          hintText.innerHTML =
+            "Tap inside the goal frame to choose your shot direction, or use the <strong>SHOOT</strong> button for a quick kick.";
+          setStatus("");
         }
-        return;
       }
 
-      state.playing = true;
-      shootButton.disabled = true;
-      resultText.textContent = "Đang sút";
-      hintText.textContent = "Bóng đang bay về vị trí bạn vừa chọn...";
-      hidePopup();
-      resetRoundVisuals();
-
-      const outcome = resolveShotOutcome(aim);
-      const start = getBallStartPoint();
-      const target = getGoalTargetPoint(outcome.visualAim);
-      const shotX = target.x - start.x;
-      const shotY = target.y - start.y;
-      const shotScale = outcome.type === "miss" ? 0.46 : outcome.isWin ? 0.42 : 0.5;
-      const shotRotate = `${(Math.random() - 0.5) * 130}deg`;
-
-      moveKeeper(outcome.visualAim.x, outcome.isWin);
-      animateBallFlight(shotX, shotY, shotScale, shotRotate);
-
-      window.setTimeout(() => {
-        showBanner(outcome.type);
-        resultText.textContent = outcome.type === "win" ? "Ghi bàn" : outcome.type === "miss" ? "Ra ngoài" : "Cản phá";
-        hintText.textContent = outcome.type === "win"
-          ? "Cú sút thành công. Hệ thống đang mở phần thưởng..."
-          : outcome.type === "miss"
-            ? "Bóng đã đi ra ngoài khung thành."
-            : "Thủ môn đã cản phá. Hệ thống đang hiển thị kết quả...";
-        if (outcome.isWin) {
-          spawnConfetti();
+      function resetBall() {
+        if (state.ballFlight) {
+          state.ballFlight.cancel();
+          state.ballFlight = null;
         }
-      }, BANNER_DELAY);
-
-      window.setTimeout(() => {
-        setStoredPlaysUsed(getStoredPlaysUsed() + 1);
-        state.playing = false;
-        syncPlayState();
-        openPopup(outcome.type, outcome.prize);
-      }, RESULT_DELAY);
-    }
-
-    joinButton.addEventListener("click", () => {
-      state.introVisible = false;
-      intro.classList.add("hidden");
-      game.classList.remove("hidden");
-      syncPlayState();
-    });
-
-    shootButton.addEventListener("click", () => {
-      runShot(autoAim());
-    });
-
-    aimArea.addEventListener("click", (event) => {
-      if (state.introVisible || !overlay.classList.contains("hidden")) {
-        return;
+        ball.style.setProperty("--ball-x", "0px");
+        ball.style.setProperty("--ball-y", "0px");
+        ball.style.setProperty("--ball-scale", "1");
+        ball.style.setProperty("--ball-rotate", "0deg");
       }
 
-      const goalRect = goalZone.getBoundingClientRect();
-      if (!isInsideRect(event.clientX, event.clientY, goalRect)) {
-        return;
+      function resetKeeper(changeAsset = false) {
+        state.keeperTick = 0;
+        state.keeperFrame = 0;
+        state.keeperOffset = 0;
+        state.keeperFrozen = false;
+        if (changeAsset || !state.keeperAsset) {
+          state.keeperAsset = pickKeeperAsset();
+        }
+        keeper.src = state.keeperAsset;
+        keeper.style.setProperty("--keeper-x", "0px");
+        keeper.style.setProperty("--keeper-y", "0px");
+        keeper.style.setProperty("--keeper-scale", "1");
       }
 
-      sparkAt(event.clientX, event.clientY);
-      runShot(normalizeAim(event.clientX, event.clientY));
-    });
-
-    closeWin.addEventListener("click", () => {
-      closePopup();
-    });
-
-    closeLose.addEventListener("click", () => {
-      closePopup();
-    });
-
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) {
-        closePopup();
-      }
-    });
-
-    window.addEventListener("keydown", (event) => {
-      if (event.code !== "Space" && event.code !== "Enter") {
-        return;
+      function resetRoundVisuals(changeAsset = false) {
+        resetBall();
+        resetKeeper(changeAsset);
+        hideBanner();
+        confetti.innerHTML = "";
       }
 
-      if (state.introVisible) {
+      function getKeeperTravelRange() {
+        return goalZone.clientWidth * 0.28;
+      }
+
+      function hideBanner() {
+        banner.className = "banner";
+      }
+
+      function showBanner(type) {
+        const bannerMode = type === "win" ? "goal" : type;
+        banner.className = `banner ${bannerMode} show`;
+        bannerText.textContent =
+          type === "win" ? "GOAL" : type === "miss" ? "MISS" : "SAVE";
+        bannerSub.textContent =
+          type === "win"
+            ? "Prize unlocked"
+            : type === "miss"
+              ? "Shot went wide"
+              : "Try again next time";
+      }
+
+      function openPopup(type, prize) {
+        hideBanner();
+        overlay.classList.remove("hidden");
+        winPopup.classList.add("hidden");
+        losePopup.classList.add("hidden");
+        rewardPopup.classList.add("hidden");
+
+        if (type === "win") {
+          prizeText.textContent = prize.name;
+          rewardPrizeText.textContent = prize.name;
+          winPopup.classList.remove("hidden");
+        } else {
+          loseTitle.textContent = type === "miss" ? "Miss" : "Save";
+          loseCopy.textContent =
+            type === "miss"
+              ? "Your shot went wide of the goal. Line it up again on your next play."
+              : "The goalkeeper saved your shot. Better luck next time.";
+          losePopup.classList.remove("hidden");
+        }
+      }
+
+      function hidePopup() {
+        overlay.classList.add("hidden");
+        winPopup.classList.add("hidden");
+        losePopup.classList.add("hidden");
+        rewardPopup.classList.add("hidden");
+      }
+
+      function closePopup() {
+        hidePopup();
+        rewardForm.reset();
+        formNote.textContent = "";
+        if (!state.playing) {
+          resetRoundVisuals(true);
+        }
+      }
+
+      function openRewardForm() {
+        winPopup.classList.add("hidden");
+        losePopup.classList.add("hidden");
+        rewardPopup.classList.remove("hidden");
+        rewardForm.reset();
+        formNote.textContent = "";
+      }
+
+      function spawnConfetti() {
+        confetti.innerHTML = "";
+        const colors = ["#ff6d43", "#fff0a2", "#21c488", "#ffffff", "#69bcff"];
+
+        for (let i = 0; i < 28; i += 1) {
+          const node = document.createElement("span");
+          node.className = "confetti";
+          node.style.left = `${Math.random() * 100}%`;
+          node.style.background = colors[i % colors.length];
+          node.style.setProperty("--drift", `${(Math.random() - 0.5) * 160}px`);
+          node.style.setProperty("--spin", `${(Math.random() - 0.5) * 900}deg`);
+          node.style.animationDelay = `${Math.random() * 180}ms`;
+          confetti.appendChild(node);
+        }
+      }
+
+      function sparkAt(clientX, clientY) {
+        const rect = aimArea.getBoundingClientRect();
+        const spark = document.createElement("span");
+        spark.className = "spark";
+        spark.style.left = `${clientX - rect.left - 7}px`;
+        spark.style.top = `${clientY - rect.top - 7}px`;
+        aimArea.appendChild(spark);
+
+        window.setTimeout(() => spark.remove(), 700);
+      }
+
+      function normalizeAim(clientX, clientY) {
+        const rect = goalZone.getBoundingClientRect();
+        const x = (clientX - rect.left) / rect.width;
+        const y = (clientY - rect.top) / rect.height;
+
+        return {
+          x: clamp(x, GOAL_ZONE_LIMITS.minX, GOAL_ZONE_LIMITS.maxX),
+          y: clamp(y, GOAL_ZONE_LIMITS.minY, GOAL_ZONE_LIMITS.maxY),
+        };
+      }
+
+      function autoAim() {
+        const xMarks = [0.18, 0.34, 0.5, 0.66, 0.82];
+        const yMarks = [0.34, 0.48, 0.6];
+        return {
+          x: xMarks[Math.floor(Math.random() * xMarks.length)],
+          y: yMarks[Math.floor(Math.random() * yMarks.length)],
+        };
+      }
+
+      function isAimInsideGoalMouth(aim) {
+        return isWithinLimits(aim, GOAL_MOUTH_LIMITS);
+      }
+
+      function getKeeperNormalizedX() {
+        const range = getKeeperTravelRange();
+        if (!range) {
+          return 0.5;
+        }
+
+        return clamp(
+          0.5 + state.keeperOffset / (range * 2),
+          GOAL_MOUTH_LIMITS.minX,
+          GOAL_MOUTH_LIMITS.maxX,
+        );
+      }
+
+      function getKeeperSaveReach(aim) {
+        if (aim.y <= 0.38) {
+          return KEEPER_SAVE_REACH.high;
+        }
+
+        if (aim.y <= 0.54) {
+          return KEEPER_SAVE_REACH.mid;
+        }
+
+        return KEEPER_SAVE_REACH.low;
+      }
+
+      function jitterAim(
+        aim,
+        jitter = SHOT_JITTER,
+        limits = GOAL_MOUTH_LIMITS,
+      ) {
+        return {
+          x: clamp(
+            aim.x + randomBetween(-jitter.x, jitter.x),
+            limits.minX,
+            limits.maxX,
+          ),
+          y: clamp(
+            aim.y + randomBetween(-jitter.y, jitter.y),
+            limits.minY,
+            limits.maxY,
+          ),
+        };
+      }
+
+      function getSaveImpactAim(aim, keeperX) {
+        const saveReach = getKeeperSaveReach(aim);
+        const impactX =
+          keeperX + randomBetween(-saveReach * 0.5, saveReach * 0.5);
+        return {
+          x: clamp(
+            impactX,
+            GOAL_MOUTH_LIMITS.minX + 0.03,
+            GOAL_MOUTH_LIMITS.maxX - 0.03,
+          ),
+          y: clamp(Math.max(aim.y, randomBetween(0.42, 0.5)), 0.38, 0.62),
+        };
+      }
+
+      function getGoalImpactAim(aim, keeperX) {
+        const goalAim = jitterAim(aim);
+        const saveReach = getKeeperSaveReach(goalAim) + GOAL_ESCAPE_MARGIN;
+        const isTooCloseToKeeper = Math.abs(goalAim.x - keeperX) <= saveReach;
+
+        if (!isTooCloseToKeeper) {
+          return goalAim;
+        }
+
+        const shootRight = goalAim.x >= keeperX;
+        return {
+          x: clamp(
+            keeperX +
+              (shootRight ? 1 : -1) *
+                randomBetween(saveReach, saveReach + 0.12),
+            GOAL_MOUTH_LIMITS.minX,
+            GOAL_MOUTH_LIMITS.maxX,
+          ),
+          y: clamp(
+            goalAim.y - randomBetween(0.02, 0.05),
+            GOAL_MOUTH_LIMITS.minY,
+            GOAL_MOUTH_LIMITS.maxY,
+          ),
+        };
+      }
+
+      function pickSaveStyle() {
+        return SAVE_STYLES[Math.floor(Math.random() * SAVE_STYLES.length)];
+      }
+
+      function resolveShotOutcome(aim) {
+        if (!isAimInsideGoalMouth(aim)) {
+          return {
+            type: "miss",
+            isWin: false,
+            prize: null,
+            visualAim: aim,
+            saveStyle: null,
+          };
+        }
+
+        const keeperX = getKeeperNormalizedX();
+        const isGoal = Math.random() < GOAL_SUCCESS_RATE;
+
+        if (!isGoal) {
+          const saveSourceAim = jitterAim(aim, { x: 0.04, y: 0.04 });
+          const saveStyle = pickSaveStyle();
+          return {
+            type: "save",
+            isWin: false,
+            prize: null,
+            visualAim: getSaveImpactAim(saveSourceAim, keeperX),
+            saveStyle,
+          };
+        }
+
+        return {
+          type: "win",
+          isWin: true,
+          prize: weightedPick(prizes),
+          visualAim: getGoalImpactAim(aim, keeperX),
+          saveStyle: null,
+        };
+      }
+
+      function getBallStartPoint() {
+        return {
+          x: ball.offsetLeft,
+          y: ball.offsetTop + ball.offsetHeight * 0.5,
+        };
+      }
+
+      function getGoalTargetPoint(aim) {
+        return {
+          x: goalZone.offsetLeft + goalZone.clientWidth * aim.x,
+          y: goalZone.offsetTop + goalZone.clientHeight * aim.y,
+        };
+      }
+
+      function animateBallFlight(
+        shotX,
+        shotY,
+        shotScale,
+        shotRotate,
+        type,
+        saveStyle,
+      ) {
+        if (state.ballFlight) {
+          state.ballFlight.cancel();
+        }
+
+        const endRotate = Number.parseFloat(shotRotate);
+        const midX = shotX * 0.44;
+        const midY = Math.min(shotY * 0.4, shotY - aimArea.clientHeight * 0.08);
+        const midScale = 0.74;
+        const keyframes = [
+          {
+            transform:
+              "translateX(-50%) translate(0px, 0px) scale(1) rotate(0deg)",
+          },
+          {
+            offset: 0.42,
+            transform: `translateX(-50%) translate(${midX}px, ${midY}px) scale(${midScale}) rotate(${endRotate * 0.48}deg)`,
+          },
+        ];
+        let duration = SHOT_TRAVEL_MS;
+
+        if (type === "save") {
+          if (saveStyle === "catch") {
+            const secureX = shotX * 0.99;
+            const secureY = shotY + randomBetween(8, 18);
+            keyframes.push(
+              {
+                offset: 0.72,
+                transform: `translateX(-50%) translate(${shotX}px, ${shotY}px) scale(${shotScale}) rotate(${endRotate}deg)`,
+              },
+              {
+                offset: 0.88,
+                transform: `translateX(-50%) translate(${secureX}px, ${secureY}px) scale(${shotScale * 0.9}) rotate(${endRotate + 24}deg)`,
+              },
+              {
+                transform: `translateX(-50%) translate(${secureX}px, ${secureY}px) scale(${shotScale * 0.9}) rotate(${endRotate + 24}deg)`,
+              },
+            );
+            duration += 320;
+          } else {
+            const reboundX =
+              shotX + (shotX >= 0 ? 1 : -1) * randomBetween(160, 250);
+            const reboundY = shotY + randomBetween(40, 120);
+            const dropX = reboundX * 0.82;
+            const dropY = reboundY + aimArea.clientHeight * 0.3;
+            const reboundScale = Math.max(shotScale * 1.18, 0.62);
+            const dropScale = Math.max(shotScale * 1.58, 0.9);
+            keyframes.push(
+              {
+                offset: 0.68,
+                transform: `translateX(-50%) translate(${shotX}px, ${shotY}px) scale(${shotScale}) rotate(${endRotate}deg)`,
+              },
+              {
+                offset: 0.82,
+                transform: `translateX(-50%) translate(${reboundX}px, ${reboundY}px) scale(${reboundScale}) rotate(${endRotate + 180}deg)`,
+              },
+              {
+                transform: `translateX(-50%) translate(${dropX}px, ${dropY}px) scale(${dropScale}) rotate(${endRotate + 320}deg)`,
+              },
+            );
+            duration += 500;
+          }
+        } else if (type === "miss") {
+          const overshootX =
+            shotX + (shotX >= 0 ? 1 : -1) * randomBetween(120, 180);
+          const overshootY = shotY + randomBetween(30, 80);
+          keyframes.push(
+            {
+              offset: 0.74,
+              transform: `translateX(-50%) translate(${shotX}px, ${shotY}px) scale(${shotScale}) rotate(${endRotate}deg)`,
+            },
+            {
+              transform: `translateX(-50%) translate(${overshootX}px, ${overshootY}px) scale(${shotScale * 0.9}) rotate(${endRotate + 110}deg)`,
+            },
+          );
+          duration += 200;
+        } else {
+          keyframes.push({
+            transform: `translateX(-50%) translate(${shotX}px, ${shotY}px) scale(${shotScale}) rotate(${endRotate}deg)`,
+          });
+        }
+
+        state.ballFlight = ball.animate(
+          keyframes,
+          {
+            duration,
+            easing: "cubic-bezier(0.18, 0.72, 0.22, 1)",
+            fill: "forwards",
+          },
+        );
+      }
+
+      function animateKeeper(timestamp) {
+        if (!state.keeperFrame) {
+          state.keeperFrame = timestamp;
+        }
+
+        const delta = timestamp - state.keeperFrame;
+        state.keeperFrame = timestamp;
+
+        if (!state.keeperFrozen) {
+          state.keeperTick += delta * 0.0014;
+          state.keeperOffset =
+            Math.sin(state.keeperTick) * getKeeperTravelRange();
+        }
+
+        keeper.style.setProperty("--keeper-x", `${state.keeperOffset}px`);
+        window.requestAnimationFrame(animateKeeper);
+      }
+
+      function moveKeeper(targetX, isWin, saveStyle) {
+        state.keeperFrozen = true;
+        const range = getKeeperTravelRange();
+        const catchOffset = (targetX - 0.5) * range * 2;
+        const evadeOffset = targetX < 0.5 ? range * 0.55 : range * -0.55;
+        state.keeperOffset = isWin ? evadeOffset : catchOffset;
+        keeper.style.setProperty("--keeper-x", `${state.keeperOffset}px`);
+        keeper.style.setProperty(
+          "--keeper-scale",
+          isWin ? "0.96" : saveStyle === "catch" ? "1.08" : "1.05",
+        );
+        keeper.style.setProperty(
+          "--keeper-y",
+          isWin ? "0px" : saveStyle === "catch" ? "-12px" : "-4px",
+        );
+      }
+
+      function runShot(aim) {
+        if (state.played || state.playing) {
+          if (state.played) {
+            setStatus(`All ${TOTAL_PLAYS} plays on this device have been used.`);
+          }
+          return;
+        }
+
+        state.playing = true;
+        shootButton.disabled = true;
+        resultText.textContent = "SHOOTING";
+        hintText.textContent = "The ball is heading toward your selected target...";
+        hidePopup();
+        resetRoundVisuals();
+
+        const outcome = resolveShotOutcome(aim);
+        const start = getBallStartPoint();
+        const target = getGoalTargetPoint(outcome.visualAim);
+        const shotX = target.x - start.x;
+        const shotY = target.y - start.y;
+        const shotScale =
+          outcome.type === "miss" ? 0.46 : outcome.isWin ? 0.42 : 0.5;
+        const shotRotate = `${(Math.random() - 0.5) * 130}deg`;
+
+        moveKeeper(outcome.visualAim.x, outcome.isWin, outcome.saveStyle);
+        animateBallFlight(
+          shotX,
+          shotY,
+          shotScale,
+          shotRotate,
+          outcome.type,
+          outcome.saveStyle,
+        );
+
+        window.setTimeout(() => {
+          showBanner(outcome.type);
+          resultText.textContent =
+            outcome.type === "win"
+              ? "GOAL"
+              : outcome.type === "miss"
+                ? "MISS"
+                : "SAVED";
+          hintText.textContent =
+            outcome.type === "win"
+              ? "Great shot. Your reward is being prepared..."
+              : outcome.type === "miss"
+                ? "Your shot missed the frame."
+                : outcome.saveStyle === "catch"
+                  ? "The goalkeeper catches the ball cleanly. Showing the result now..."
+                  : "The goalkeeper pushes the ball away. Showing the result now...";
+          if (outcome.isWin) {
+            spawnConfetti();
+          }
+        }, BANNER_DELAY);
+
+        window.setTimeout(() => {
+          setStoredPlaysUsed(getStoredPlaysUsed() + 1);
+          state.playing = false;
+          syncPlayState();
+          openPopup(outcome.type, outcome.prize);
+        }, RESULT_DELAY);
+      }
+
+      joinButton.addEventListener("click", () => {
         state.introVisible = false;
         intro.classList.add("hidden");
         game.classList.remove("hidden");
         syncPlayState();
-      } else {
+      });
+
+      shootButton.addEventListener("click", () => {
         runShot(autoAim());
-      }
-    });
+      });
 
-    window.addEventListener("load", () => {
-      resizeStage();
-      syncPlayState();
-      resetBall();
-      resetKeeper(true);
-      if (state.introVisible) {
-        game.classList.add("hidden");
-      }
-      window.requestAnimationFrame(animateKeeper);
-    });
+      aimArea.addEventListener("click", (event) => {
+        if (state.introVisible || !overlay.classList.contains("hidden")) {
+          return;
+        }
 
-    window.addEventListener("resize", resizeStage);
-  </script>
-</body>
+        const goalRect = goalZone.getBoundingClientRect();
+        if (!isInsideRect(event.clientX, event.clientY, goalRect)) {
+          return;
+        }
+
+        sparkAt(event.clientX, event.clientY);
+        runShot(normalizeAim(event.clientX, event.clientY));
+      });
+
+      closeWin.addEventListener("click", () => {
+        openRewardForm();
+      });
+
+      closeLose.addEventListener("click", () => {
+        closePopup();
+      });
+
+      rewardForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        formNote.textContent = "Thanks. Your reward details have been submitted.";
+
+        window.setTimeout(() => {
+          closePopup();
+        }, 900);
+      });
+
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) {
+          closePopup();
+        }
+      });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.code !== "Space" && event.code !== "Enter") {
+          return;
+        }
+
+        if (!overlay.classList.contains("hidden")) {
+          return;
+        }
+
+        if (state.introVisible) {
+          state.introVisible = false;
+          intro.classList.add("hidden");
+          game.classList.remove("hidden");
+          syncPlayState();
+        } else {
+          runShot(autoAim());
+        }
+      });
+
+      window.addEventListener("load", () => {
+        resizeStage();
+        syncPlayState();
+        resetBall();
+        resetKeeper(true);
+        if (state.introVisible) {
+          game.classList.add("hidden");
+        }
+        window.requestAnimationFrame(animateKeeper);
+      });
+
+      window.addEventListener("resize", resizeStage);
+    </script>
+  </body>
 </html>
