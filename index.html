@@ -236,6 +236,52 @@
         color: #fff0a2;
       }
 
+      .demo-reset {
+        position: absolute;
+        top: 8.8%;
+        right: 6%;
+        padding: 14px 22px;
+        border-radius: 999px;
+        background: rgba(10, 22, 46, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #fff5be;
+        font-family: var(--display-font);
+        font-size: 22px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(8px);
+        z-index: 6;
+        transition:
+          transform 180ms ease,
+          opacity 180ms ease,
+          background 180ms ease;
+      }
+
+      .demo-reset:active {
+        transform: scale(0.97);
+      }
+
+      .demo-reset:hover {
+        background: rgba(20, 40, 78, 0.9);
+      }
+
+      .demo-reset.covert {
+        opacity: 0;
+        color: transparent;
+        background: transparent;
+        border-color: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+      }
+
+      .demo-reset.covert:hover,
+      .demo-reset.covert:active {
+        opacity: 0;
+        background: transparent;
+        transform: none;
+      }
+
       .hint {
         position: absolute;
         left: 50%;
@@ -764,6 +810,10 @@
             </div>
           </div>
 
+          <button class="demo-reset covert" id="demoResetButton" type="button">
+            Reset plays
+          </button>
+
           <img
             class="brand game-brand"
             src="assets/layout/12.png"
@@ -899,15 +949,25 @@
         minX: 0.04,
         maxX: 0.96,
         minY: 0.08,
-        maxY: 0.78,
+        maxY: 0.86,
       };
       const GOAL_MOUTH_LIMITS = {
-        minX: 0.14,
-        maxX: 0.86,
-        minY: 0.28,
-        maxY: 0.67,
+        minX: 0.05,
+        maxX: 0.95,
+        minY: 0.49,
+        maxY: 0.79,
       };
       const GOAL_SUCCESS_RATE = 0.38;
+      const SHOT_SCALE = {
+        win: 0.42,
+        save: 0.5,
+        miss: 0.46,
+      };
+      const GOAL_HITBOX_INSET = {
+        side: 0.92,
+        top: 1.02,
+        bottom: 0.12,
+      };
       const SAVE_STYLES = ["catch", "parry"];
       const KEEPER_SAVE_REACH = {
         high: 0.06,
@@ -956,6 +1016,7 @@
       const statusText = document.getElementById("statusText");
       const hintText = document.querySelector(".hint");
       const shootButton = document.getElementById("shootButton");
+      const demoResetButton = document.getElementById("demoResetButton");
       const banner = document.getElementById("banner");
       const bannerText = document.getElementById("bannerText");
       const bannerSub = document.getElementById("bannerSub");
@@ -1182,6 +1243,17 @@
         formNote.textContent = "";
       }
 
+      function resetDemoPlays() {
+        setStoredPlaysUsed(0);
+        state.playing = false;
+        hidePopup();
+        rewardForm.reset();
+        formNote.textContent = "";
+        resetRoundVisuals(true);
+        syncPlayState();
+        setStatus(`Demo reset complete. ${TOTAL_PLAYS} plays restored.`);
+      }
+
       function spawnConfetti() {
         confetti.innerHTML = "";
         const colors = ["#ff6d43", "#fff0a2", "#21c488", "#ffffff", "#69bcff"];
@@ -1222,15 +1294,40 @@
 
       function autoAim() {
         const xMarks = [0.18, 0.34, 0.5, 0.66, 0.82];
-        const yMarks = [0.34, 0.48, 0.6];
+        const yMarks = [0.58, 0.66, 0.74];
         return {
           x: xMarks[Math.floor(Math.random() * xMarks.length)],
           y: yMarks[Math.floor(Math.random() * yMarks.length)],
         };
       }
 
-      function isAimInsideGoalMouth(aim) {
-        return isWithinLimits(aim, GOAL_MOUTH_LIMITS);
+      function getBallGoalInset(shotScale = SHOT_SCALE.win) {
+        if (!goalZone.clientWidth || !goalZone.clientHeight) {
+          return { x: 0, y: 0 };
+        }
+
+        const renderedBallWidth = ball.clientWidth * shotScale;
+        const radiusX = renderedBallWidth * 0.5;
+        const radiusY = radiusX;
+
+        return {
+          x: radiusX / goalZone.clientWidth,
+          y: radiusY / goalZone.clientHeight,
+        };
+      }
+
+      function getGoalScoringLimits(shotScale = SHOT_SCALE.win) {
+        const inset = getBallGoalInset(shotScale);
+        return {
+          minX: GOAL_MOUTH_LIMITS.minX + inset.x * GOAL_HITBOX_INSET.side,
+          maxX: GOAL_MOUTH_LIMITS.maxX - inset.x * GOAL_HITBOX_INSET.side,
+          minY: GOAL_MOUTH_LIMITS.minY + inset.y * GOAL_HITBOX_INSET.top,
+          maxY: GOAL_MOUTH_LIMITS.maxY - inset.y * GOAL_HITBOX_INSET.bottom,
+        };
+      }
+
+      function isAimInsideGoalMouth(aim, shotScale = SHOT_SCALE.win) {
+        return isWithinLimits(aim, getGoalScoringLimits(shotScale));
       }
 
       function getKeeperNormalizedX() {
@@ -1292,7 +1389,8 @@
       }
 
       function getGoalImpactAim(aim, keeperX) {
-        const goalAim = jitterAim(aim);
+        const scoringLimits = getGoalScoringLimits();
+        const goalAim = jitterAim(aim, SHOT_JITTER, scoringLimits);
         const saveReach = getKeeperSaveReach(goalAim) + GOAL_ESCAPE_MARGIN;
         const isTooCloseToKeeper = Math.abs(goalAim.x - keeperX) <= saveReach;
 
@@ -1306,13 +1404,13 @@
             keeperX +
               (shootRight ? 1 : -1) *
                 randomBetween(saveReach, saveReach + 0.12),
-            GOAL_MOUTH_LIMITS.minX,
-            GOAL_MOUTH_LIMITS.maxX,
+            scoringLimits.minX,
+            scoringLimits.maxX,
           ),
           y: clamp(
             goalAim.y - randomBetween(0.02, 0.05),
-            GOAL_MOUTH_LIMITS.minY,
-            GOAL_MOUTH_LIMITS.maxY,
+            scoringLimits.minY,
+            scoringLimits.maxY,
           ),
         };
       }
@@ -1524,8 +1622,11 @@
         const target = getGoalTargetPoint(outcome.visualAim);
         const shotX = target.x - start.x;
         const shotY = target.y - start.y;
-        const shotScale =
-          outcome.type === "miss" ? 0.46 : outcome.isWin ? 0.42 : 0.5;
+        const shotScale = outcome.isWin
+          ? SHOT_SCALE.win
+          : outcome.type === "miss"
+            ? SHOT_SCALE.miss
+            : SHOT_SCALE.save;
         const shotRotate = `${(Math.random() - 0.5) * 130}deg`;
 
         moveKeeper(outcome.visualAim.x, outcome.isWin, outcome.saveStyle);
@@ -1576,6 +1677,10 @@
 
       shootButton.addEventListener("click", () => {
         runShot(autoAim());
+      });
+
+      demoResetButton.addEventListener("click", () => {
+        resetDemoPlays();
       });
 
       aimArea.addEventListener("click", (event) => {
